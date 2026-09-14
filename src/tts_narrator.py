@@ -1,15 +1,14 @@
 """
-وحدة توليد النطق الصوتي الطبي الأكاديمي باستخدام edge-tts المجانية بنسبة 100%.
-توفر أصواتاً عصبية بشرية فائقة النقاء باللغتين العربية والإنجليزية.
+وحدة توليد النطق الصوتي الطبي الأكاديمي السريع عبر edge-tts.
+تستخدم عملية منفصلة (Subprocess) لعزل الصوت تماماً عن حلقة Streamlit ومنع أي تعليق أو بطء.
 """
 
 import os
 import re
-import asyncio
-from typing import Dict, Any, Optional
-import edge_tts
+import tempfile
+import subprocess
+from typing import Dict, Any
 
-# الأصوات الموصى بها للشرح الطبي
 RECOMMENDED_VOICES = {
     "ar-EG-Shakir": {
         "id": "ar-EG-ShakirNeural",
@@ -40,7 +39,7 @@ def clean_markdown_for_speech(text: str) -> str:
     """
     # إزالة كتل كود mermaid والمخططات
     text = re.sub(r"```mermaid.*?```", "", text, flags=re.DOTALL)
-    # إزالة أي كتل برمجية أخرى
+    # إزالة أي كتل كود أخرى
     text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
     # إزالة وسوم bdi و html
     text = re.sub(r"<[^>]+>", "", text)
@@ -48,21 +47,13 @@ def clean_markdown_for_speech(text: str) -> str:
     text = re.sub(r"^#{1,6}\s*", "", text, flags=re.MULTILINE)
     # إزالة علامات التنسيق مثل ** و * و __ و `
     text = re.sub(r"[*_`]", "", text)
-    # استبدال فواصل الجداول | بفواصل عادية
+    # إزالة فواصل الجداول
     text = re.sub(r"\|", " ", text)
-    # إزالة الروابط الماركداون [text](url) -> text
+    # إزالة روابط الماركداون
     text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)
-    # تنظيف المسافات والأسطر الفارغة الزائدة
+    # تنظيف الفراغات المتكررة
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
-
-
-async def _generate_audio_async(text: str, output_path: str, voice_id: str, rate: str = "+0%") -> None:
-    """
-    دالة غير متزامنة لتوليد ملف الصوت وحفظه.
-    """
-    communicate = edge_tts.Communicate(text, voice_id, rate=rate)
-    await communicate.save(output_path)
 
 
 def generate_audio(
@@ -70,10 +61,10 @@ def generate_audio(
     output_filename: str = "lecture_explanation.mp3",
     voice_key: str = "ar-EG-Shakir",
     output_dir: str = "audio_outputs",
-    rate: str = "+0%"
+    rate: str = "+15%"
 ) -> Dict[str, Any]:
     """
-    الدالة الرئيسية لتوليد الصوت من النص الطبي.
+    توليد الصوت عبر عملية معزولة وسريعة دون أي تعليق في الواجهة.
     """
     cleaned_text = clean_markdown_for_speech(text)
     if not cleaned_text:
@@ -86,36 +77,50 @@ def generate_audio(
     voice_id = voice_info["id"]
 
     try:
-        # تشغيل الدالة غير المتزامنة داخل الحلقة المناسبة
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # حفظ النص في ملف مؤقت مشفر بـ UTF-8 لتجنب مشاكل الرموز في الأوامر
+        with tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".txt", delete=False) as temp_file:
+            temp_file.write(cleaned_text)
+            temp_file_path = temp_file.name
 
-        if loop.is_running():
-            # إذا كان هناك loop نشط بالفعل (مثل سياق Streamlit/Jupyter)
-            import nest_asyncio
-            nest_asyncio.apply()
-            loop.run_until_complete(_generate_audio_async(cleaned_text, output_path, voice_id, rate))
-        else:
-            loop.run_until_complete(_generate_audio_async(cleaned_text, output_path, voice_id, rate))
+        cmd = [
+            "edge-tts",
+            "--file", temp_file_path,
+            "--voice", voice_id,
+            "--rate", rate,
+            "--write-media", output_path
+        ]
 
-        return {
-            "success": True,
-            "file_path": output_path,
-            "voice_used": voice_info["name"],
-            "character_count": len(cleaned_text),
-        }
-    except Exception as e:
-        # محاولة أخيرة بـ asyncio.run
-        try:
-            asyncio.run(_generate_audio_async(cleaned_text, output_path, voice_id, rate))
+        # تشغيل الأمر في عملية معزولة مع مهلة أقصاها 90 ثانية
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=90)
+
+        # حذف الملف المؤقت
+        if os.path.exists(temp_file_path):
+            try:
+                os.remove(temp_file_path)
+            except Exception:
+                pass
+
+        if proc.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
             return {
                 "success": True,
                 "file_path": output_path,
                 "voice_used": voice_info["name"],
                 "character_count": len(cleaned_text),
+                "words": len(cleaned_text.split()),
             }
-        except Exception as err2:
-            return {"success": False, "error": f"فشل في توليد الصوت: {str(err2)}"}
+        else:
+            return {
+                "success": False,
+                "error": f"فشل توليد الصوت: {proc.stderr or 'لم يتم إنشاء ملف الصوت بنجاح'}",
+            }
+
+    except subprocess.TimeoutExpired:
+        return {
+            "success": False,
+            "error": "استغرق توليد الصوت وقتاً أطول من المتوقع (Timeout). يُفضل توليد الصوت للكبسولة الصوتية السريعة.",
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"خطأ أثناء توليد الصوت: {str(e)}",
+        }

@@ -178,40 +178,84 @@ if explain_btn:
 
             if res["success"]:
                 st.session_state["active_explanation"] = res["explanation"]
-                st.success("🎉 تم توليد الشرح الأكاديمي المتكامل بنجاح!")
+                st.session_state["active_audio_script"] = res.get("audio_script", res["explanation"][:1000])
+                st.session_state["audio_path"] = None  # إعادة تعيين الصوت للمحاضرة الجديدة
+                st.success("🎉 تم توليد المحاضرة بنجاح! يمكنك الاستماع إليها صوتياً الآن.")
             else:
                 st.error(res["error"])
 
-# عرض الشرح التفاعلي وأزرار الصوت والتحميل
+# عرض المحاضرة الصوتية أولاً ثم الشرح التفصيلي
 if "active_explanation" in st.session_state:
     st.divider()
-    st.markdown("### 📋 الشرح الأكاديمي المتكامل:")
-    
-    # عرض محتوى الماركداون مباشرة
-    st.markdown(st.session_state["active_explanation"], unsafe_allow_html=True)
+
+    # =========================================================================
+    # 🎧 ركن الاستماع الصوتي أولاً (Audio-First Experience)
+    # =========================================================================
+    st.markdown("""
+    <div style="background: linear-gradient(135deg, #1f3a52 0%, #172c3c 100%); padding: 18px 22px; border-radius: 12px; border-right: 5px solid #38bec9; margin-bottom: 20px;">
+        <h3 style="margin:0; color: #ffffff; font-size: 1.3rem;">🎙️ ركن الاستماع الصوتي (دكتور عبد المتعال فودة)</h3>
+        <p style="margin: 5px 0 0 0; color: #cbd5e1; font-size: 0.95rem;">
+            استمع للشرح الأكاديمي بصوت طبيعي ونقي، مصمم خصيصاً للأذن لترسيخ الفهم والميكانيزمات وفخاخ الامتحان.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_btn1, col_btn2 = st.columns([1, 1])
+
+    with col_btn1:
+        fast_audio_btn = st.button("⚡ تشغيل المحاضرة الصوتية المركزة (سريعة ومباشرة)", type="primary", use_container_width=True)
+
+    with col_btn2:
+        full_audio_btn = st.button("🎧 تشغيل الشرح التفصيلي الكامل بالصوت", use_container_width=True)
+
+    # معالجة توليد الصوت السريع
+    if fast_audio_btn:
+        with st.spinner("جاري تحويل المحاضرة إلى صوت أكاديمي نقي (يستغرق ثوانٍ معدودة)..."):
+            script_to_speak = st.session_state.get("active_audio_script", st.session_state["active_explanation"][:1000])
+            audio_res = generate_audio(
+                text=script_to_speak,
+                output_filename="lecture_podcast.mp3",
+                voice_key=selected_voice_key,
+                rate="+15%"
+            )
+            if audio_res["success"]:
+                st.session_state["audio_path"] = audio_res["file_path"]
+                st.session_state["audio_type"] = "المحاضرة الصوتية المركزة"
+            else:
+                st.error(audio_res["error"])
+
+    # معالجة توليد الشرح الكامل
+    if full_audio_btn:
+        with st.spinner("جاري تحويل الشرح التفصيلي الكامل إلى ملف صوتي شامل..."):
+            audio_res = generate_audio(
+                text=st.session_state["active_explanation"],
+                output_filename="lecture_full.mp3",
+                voice_key=selected_voice_key,
+                rate="+15%"
+            )
+            if audio_res["success"]:
+                st.session_state["audio_path"] = audio_res["file_path"]
+                st.session_state["audio_type"] = "الشرح التفصيلي الكامل"
+            else:
+                st.error(audio_res["error"])
+
+    # مشغل الصوت التفاعلي الثابت
+    if st.session_state.get("audio_path") and os.path.exists(st.session_state["audio_path"]):
+        st.success(f"✅ تم تجهيز {st.session_state.get('audio_type', 'الصوت')} بنجاح! اضغط تشغيل:")
+        st.audio(st.session_state["audio_path"], format="audio/mp3", autoplay=True)
 
     st.divider()
-    c_audio, c_download = st.columns([1, 1])
 
-    with c_audio:
-        if st.button("🎙️ الاستماع للشرح بصوت أكاديمي طبيعي (Edge-TTS)", use_container_width=True):
-            with st.spinner("جاري تحويل الشرح إلى صوت أكاديمي نقي..."):
-                audio_res = generate_audio(
-                    text=st.session_state["active_explanation"],
-                    output_filename="current_lecture.mp3",
-                    voice_key=selected_voice_key
-                )
-                if audio_res["success"]:
-                    st.audio(audio_res["file_path"], format="audio/mp3")
-                    st.success(f"✅ تم توليد الصوت بنجاح بصوت {audio_res['voice_used']}!")
-                else:
-                    st.error(audio_res["error"])
-
-    with c_download:
+    # =========================================================================
+    # 📋 الشرح المرجعي المكتوب والرسوم التوضيحية
+    # =========================================================================
+    with st.expander("📖 عرض نص الشرح المرجعي والمخططات الذهنية (اضغط للقراءة)", expanded=True):
+        st.markdown(st.session_state["active_explanation"], unsafe_allow_html=True)
+        st.write("")
         st.download_button(
             label="📥 تحميل الشرح كملف نصي (Markdown)",
             data=st.session_state["active_explanation"],
-            file_name="lecture_explanation.md",
+            file_name="medical_lecture_explanation.md",
             mime="text/markdown",
             use_container_width=True
         )

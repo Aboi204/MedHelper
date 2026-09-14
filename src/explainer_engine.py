@@ -95,6 +95,8 @@ def explain_lecture(
    - تحذيرات استباقية من أخطاء الشفوي والنظري والمفاهيم المغلوطة.
 9. **المخطط الذهني التدفقي وجدول المقارنة (<bdi>Mermaid Diagram & Summary Matrix</bdi>):**
    - مخطط تدفقي بصيغة ```mermaid``` يلخص تسلسل الفكرة، وجدول مقارنة سريع لتثبيت الحفظ للامتحان.
+10. **السيناريو الإلقائي الصوتي للمحاضرة (<bdi>Spoken Audio Script</bdi>):**
+   - نص إلقائي ممتع بلسان د. عبد المتعال فودة مصمم خصيصاً للاستماع الصوتي (Audio Podcast)، في حدود 150 إلى 220 كلمة، يوجه الكلام مباشرة لأذن الطالب بدون رموز ماركداون أو جداول، يبدأ بـ (بسم الله الرحمن الرحيم.. أهلاً بكم يا دكاترة) ويشرح التأصيل والميكانيزم وتشبيه العيادة وفخ الامتحان.
 
 *تنبيه حاسم: احرص على وضع كل كلمة أو مصطلح أو اختصار إنجليزي داخل وسم <bdi>...</bdi> دائماً.*
 """
@@ -132,10 +134,22 @@ def explain_lecture(
                 )
 
                 if response and response.text:
+                    full_text = response.text
+                    # استخراج السيناريو الصوتي الإلقائي إذا وجد
+                    import re
+                    audio_script = ""
+                    match = re.search(r"(?:10\.\s*\*\*السيناريو الإلقائي الصوتي[^\*]*\*\*|###\s*السيناريو الإلقائي الصوتي)[^\n]*\n(.*)", full_text, re.DOTALL)
+                    if match:
+                        audio_script = match.group(1).strip()
+                    else:
+                        # أخذ ملخص سريع للصوت
+                        audio_script = full_text[:1200]
+
                     return {
                         "success": True,
                         "doctor_name": "الأستاذ الدكتور عبد المتعال فودة (رائد الفارماكولوجيا والتعليم الطبي)",
-                        "explanation": response.text,
+                        "explanation": full_text,
+                        "audio_script": audio_script,
                         "model_used": current_model,
                         "lecture_words": len(lecture_text.split()),
                     }
