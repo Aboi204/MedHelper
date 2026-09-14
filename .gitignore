@@ -1,0 +1,23 @@
+# Environment variables and secrets
+.env
+*.env
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Audio outputs and temp files
+temp_audio/
+*.mp3
+*.wav
+
+# Operating System files
+.DS_Store
+Thumbs.db
