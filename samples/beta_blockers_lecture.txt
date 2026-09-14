@@ -1,0 +1,36 @@
+# Medical Lecture: Beta-Adrenergic Antagonists (Beta-Blockers)
+Department of Pharmacology & Therapeutics
+
+1. Overview:
+Beta-adrenoceptor blocking agents are drugs that bind selectively to beta-receptors, preventing their activation by endogenous catecholamines (epinephrine and norepinephrine).
+
+2. Receptor Subtypes:
+- Beta-1 (Cardiac): Located predominantly on myocardium, SA node, AV node, and juxtaglomerular cells in the kidney.
+  Activation leads to: increased heart rate (chronotropic), increased contractility (inotropic), increased AV conduction velocity (dromotropic), and increased renin secretion.
+- Beta-2 (Smooth Muscle): Located on bronchial smooth muscle, vascular smooth muscle in skeletal muscles, liver, and uterus.
+  Activation leads to: bronchodilation, vasodilation in skeletal muscle vascular beds, increased glycogenolysis, and uterine relaxation.
+- Beta-3: Located in adipose tissue and urinary bladder detrusor muscle.
+
+3. Classification of Beta-Blockers:
+A. Non-selective (1st Generation): Block both Beta-1 and Beta-2.
+   Examples: Propranolol, Timolol, Sotalol, Nadolol.
+B. Cardioselective (2nd Generation): Predominantly block Beta-1 at therapeutic doses.
+   Examples: Atenolol, Metoprolol, Bisoprolol, Esmolol.
+C. Third Generation (With Vasodilating activity):
+   - Alpha-1 blocking activity: Carvedilol, Labetalol.
+   - Nitric oxide (NO) mediated vasodilation: Nebivolol.
+
+4. Therapeutic Indications:
+- Systemic Arterial Hypertension
+- Ischemic Heart Disease (Angina Pectoris & Post-Myocardial Infarction)
+- Chronic Stable Heart Failure (Bisoprolol, Carvedilol, Metoprolol succinate)
+- Cardiac Arrhythmias (Supraventricular tachycardias)
+- Non-cardiovascular: Migraine prophylaxis, Essential tremor, Performance anxiety, Glaucoma (Timolol eye drops).
+
+5. Adverse Effects & Contraindications:
+- Bradycardia, AV conduction block, acute decompensation in uncompensated heart failure.
+- Bronchospasm in asthmatic and COPD patients.
+- Cold extremities and Raynaud's phenomenon.
+- Masking hypoglycemia symptoms (except diaphoresis/sweating) in diabetic patients.
+- Sexual dysfunction and fatigue.
+- Rebound hypertension and anginal attacks on abrupt withdrawal (due to receptor up-regulation).
