@@ -33,7 +33,7 @@ def analyze_pedagogy(
     transcript_text: str,
     doctor_name: str,
     api_key: Optional[str] = None,
-    model_name: str = "gemini-2.0-flash"
+    model_name: str = "gemini-3.6-flash"
 ) -> Dict[str, Any]:
     """
     تحليل تفريغ المحاضرة واستخراج الركائز الـ 11 وبصمة الشرح التنفيذية.

@@ -30,7 +30,7 @@ def explain_lecture(
     doctor_profile_name: Optional[str] = "dr_abdelmotaal_fouda",
     custom_profile: Optional[Dict[str, Any]] = None,
     api_key: Optional[str] = None,
-    model_name: str = "gemini-2.0-flash",
+    model_name: str = "gemini-3.6-flash",
     additional_notes: str = ""
 ) -> Dict[str, Any]:
     """

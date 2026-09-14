@@ -252,7 +252,7 @@ with tab_lab:
     with col_d1:
         doctor_input_name = st.text_input("اسم الدكتور أو الأستاذ:", value="د. عبد المتعال فودة")
     with col_d2:
-        model_choice = st.selectbox("نموذج التحليل:", ["gemini-2.0-flash", "gemini-1.5-flash"], index=0)
+        model_choice = st.selectbox("نموذج التحليل:", ["gemini-3.6-flash", "gemini-flash-latest"], index=0)
 
     input_source = st.radio("مصدر تفريغ المحاضرة:", ["رابط مقطع يوتيوب", "لصق تفريغ نصي جاهز (Transcript)"], horizontal=True)
 
