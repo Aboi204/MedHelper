@@ -54,7 +54,7 @@ MASTER_FOUDA_PEDAGOGY_PROMPT = """
 def explain_lecture(
     lecture_text: str,
     api_key: Optional[str] = None,
-    model_name: str = "gemini-3.6-flash",
+    model_name: str = "gemini-flash-latest",
     additional_notes: str = ""
 ) -> Dict[str, Any]:
     """
@@ -99,6 +99,23 @@ def explain_lecture(
 *تنبيه حاسم: احرص على وضع كل كلمة أو مصطلح أو اختصار إنجليزي داخل وسم <bdi>...</bdi> دائماً.*
 """
 
+    models_to_try = [
+        model_name or "gemini-flash-latest",
+        "gemini-flash-latest",
+        "gemini-3.6-flash",
+        "gemini-flash-lite-latest",
+        "gemini-3.5-flash",
+    ]
+    # إزالة التكرار مع الحفاظ على الترتيب
+    seen = set()
+    unique_models = []
+    for m in models_to_try:
+        if m and m not in seen:
+            seen.add(m)
+            unique_models.append(m)
+
+    last_error = None
+
     try:
         client = get_gemini_client(api_key)
         config = types.GenerateContentConfig(
@@ -106,24 +123,34 @@ def explain_lecture(
             temperature=0.35,  # توازن مثالي بين الدقة العلمية الأكاديمية والأسلوب التعليمي الشارح
         )
 
-        response = client.models.generate_content(
-            model=model_name,
-            contents=user_prompt,
-            config=config,
-        )
+        for current_model in unique_models:
+            try:
+                response = client.models.generate_content(
+                    model=current_model,
+                    contents=user_prompt,
+                    config=config,
+                )
 
-        explanation = response.text or ""
+                if response and response.text:
+                    return {
+                        "success": True,
+                        "doctor_name": "الأستاذ الدكتور عبد المتعال فودة (رائد الفارماكولوجيا والتعليم الطبي)",
+                        "explanation": response.text,
+                        "model_used": current_model,
+                        "lecture_words": len(lecture_text.split()),
+                    }
+            except Exception as err:
+                last_error = str(err)
+                # إذا كان الخطأ 503 (ضغط على السيرفر) أو 429، نستمر فوراً للنموذج التالي
+                continue
 
         return {
-            "success": True,
-            "doctor_name": "الأستاذ الدكتور عبد المتعال فودة (رائد الفارماكولوجيا والتعليم الطبي)",
-            "explanation": explanation,
-            "model_used": model_name,
-            "lecture_words": len(lecture_text.split()),
+            "success": False,
+            "error": f"سيرفرات الذكاء الاصطناعي تشهد ضغطاً مؤقتاً. يرجى المحاولة مرة أخرى خلال لحظات. تفاصيل: {last_error}",
         }
 
     except Exception as e:
         return {
             "success": False,
-            "error": f"فشل في توليد الشرح الأكاديمي: {str(e)}",
+            "error": f"فشل في إعداد الاتصال بالذكاء الاصطناعي: {str(e)}",
         }
